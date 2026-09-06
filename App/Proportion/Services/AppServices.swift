@@ -10,7 +10,7 @@ import ProportionCore
 @Observable
 final class AppServices {
     let settings = SettingsStore()
-    let secrets = Secrets.load()
+    let secrets: Secrets
     let taxonomy = IngredientTaxonomy.standard
     let lineParser = IngredientLineParser()
     let searchEngine = SearchEngine()
@@ -20,8 +20,12 @@ final class AppServices {
     private let usdaSource: USDAFoodDataClient?
 
     init() {
-        claudeClient = secrets.anthropicAPIKey.map { ClaudeClient(apiKey: $0, model: secrets.claudeModel) }
-        usdaSource = secrets.usdaAPIKey.map { USDAFoodDataClient(apiKey: $0) }
+        // Work from a local so no closure touches `self` before every stored
+        // property is initialised.
+        let loaded = Secrets.load()
+        secrets = loaded
+        claudeClient = loaded.anthropicAPIKey.map { ClaudeClient(apiKey: $0, model: loaded.claudeModel) }
+        usdaSource = loaded.usdaAPIKey.map { USDAFoodDataClient(apiKey: $0) }
     }
 
     /// Whether model-backed features are both configured and permitted.
