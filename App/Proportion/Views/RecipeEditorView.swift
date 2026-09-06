@@ -283,10 +283,10 @@ struct RecipeEditorView: View {
 
         // Nutrition lookup runs after the save so the user isn't kept waiting;
         // the row updates itself when the numbers arrive.
-        let services = self.services
+        let appServices = services
         let recipeSnapshot = recipe
         Task { @MainActor in
-            let priced = await services.priceNutrition(for: recipeSnapshot)
+            let priced = await appServices.priceNutrition(for: recipeSnapshot)
             if priced.totalMacros != recipeSnapshot.totalMacros || priced.nutritionConfidence != recipeSnapshot.nutritionConfidence {
                 stored.update(from: priced)
                 try? context.save()
