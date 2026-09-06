@@ -27,20 +27,20 @@ struct ClaudeQueryInterpreter: QueryInterpreter {
     private static let tool = ClaudeClient.Tool(
         name: "set_search_query",
         description: "Set the structured filter that will be run against the user's saved recipes.",
-        inputSchema: Schema.object([
-            "text": Schema.string("Free keywords to match against recipe titles and ingredient names, e.g. a dish name. Null unless the user named a dish or keyword.", nullable: true),
-            "include_ingredients": Schema.array(of: Schema.string("Lowercase singular canonical ingredient or category name."), description: "Ingredients the recipe must contain."),
-            "exclude_ingredients": Schema.array(of: Schema.string("Lowercase singular canonical ingredient or category name, e.g. 'dairy', 'peanut', 'shellfish', 'chicken thigh'."), description: "Ingredients or categories the recipe must not contain."),
-            "min_protein": Schema.number("Minimum grams of protein per serving.", nullable: true),
-            "max_protein": Schema.number("Maximum grams of protein per serving.", nullable: true),
-            "min_carbs": Schema.number("Minimum grams of carbohydrate per serving.", nullable: true),
-            "max_carbs": Schema.number("Maximum grams of carbohydrate per serving.", nullable: true),
-            "min_fat": Schema.number("Minimum grams of fat per serving.", nullable: true),
-            "max_fat": Schema.number("Maximum grams of fat per serving.", nullable: true),
-            "max_calories": Schema.number("Maximum calories per serving.", nullable: true),
-            "max_minutes": Schema.integer("Maximum total prep plus cook time in minutes.", nullable: true),
-            "tags": Schema.array(of: Schema.string("A tag such as 'weeknight' or 'comfort'."), description: "Tags the recipe must carry. Usually empty."),
-            "meal_type": Schema.string("One of breakfast, brunch, lunch, dinner, snack, dessert.", nullable: true, values: ["breakfast", "brunch", "lunch", "dinner", "snack", "dessert"]),
+        inputSchema: JSONSchema.object([
+            "text": JSONSchema.string("Free keywords to match against recipe titles and ingredient names, e.g. a dish name. Null unless the user named a dish or keyword.", nullable: true),
+            "include_ingredients": JSONSchema.array(of: JSONSchema.string("Lowercase singular canonical ingredient or category name."), description: "Ingredients the recipe must contain."),
+            "exclude_ingredients": JSONSchema.array(of: JSONSchema.string("Lowercase singular canonical ingredient or category name, e.g. 'dairy', 'peanut', 'shellfish', 'chicken thigh'."), description: "Ingredients or categories the recipe must not contain."),
+            "min_protein": JSONSchema.number("Minimum grams of protein per serving.", nullable: true),
+            "max_protein": JSONSchema.number("Maximum grams of protein per serving.", nullable: true),
+            "min_carbs": JSONSchema.number("Minimum grams of carbohydrate per serving.", nullable: true),
+            "max_carbs": JSONSchema.number("Maximum grams of carbohydrate per serving.", nullable: true),
+            "min_fat": JSONSchema.number("Minimum grams of fat per serving.", nullable: true),
+            "max_fat": JSONSchema.number("Maximum grams of fat per serving.", nullable: true),
+            "max_calories": JSONSchema.number("Maximum calories per serving.", nullable: true),
+            "max_minutes": JSONSchema.integer("Maximum total prep plus cook time in minutes.", nullable: true),
+            "tags": JSONSchema.array(of: JSONSchema.string("A tag such as 'weeknight' or 'comfort'."), description: "Tags the recipe must carry. Usually empty."),
+            "meal_type": JSONSchema.string("One of breakfast, brunch, lunch, dinner, snack, dessert.", nullable: true, values: ["breakfast", "brunch", "lunch", "dinner", "snack", "dessert"]),
         ])
     )
 

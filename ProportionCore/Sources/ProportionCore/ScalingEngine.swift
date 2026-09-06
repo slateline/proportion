@@ -26,6 +26,12 @@ public struct ScaledIngredient: Identifiable, Hashable, Sendable {
     public let quantity: Quantity?
     public let note: ScalingNote?
 
+    public init(ingredient: Ingredient, quantity: Quantity?, note: ScalingNote?) {
+        self.ingredient = ingredient
+        self.quantity = quantity
+        self.note = note
+    }
+
     public var id: UUID { ingredient.id }
 }
 

@@ -34,22 +34,22 @@ struct ClaudeRecipeParser: Sendable {
     private static let tool = ClaudeClient.Tool(
         name: "save_recipe",
         description: "Record the recipe extracted from the provided text or images.",
-        inputSchema: Schema.object([
-            "is_recipe": Schema.boolean("False if the input does not contain a cooking recipe."),
-            "title": Schema.string("The recipe's name. Empty string if is_recipe is false."),
-            "servings": Schema.integer("How many servings the ingredient amounts make, only if stated.", nullable: true),
-            "prep_minutes": Schema.integer("Preparation time in minutes, only if stated.", nullable: true),
-            "cook_minutes": Schema.integer("Cooking time in minutes, only if stated.", nullable: true),
-            "ingredients": Schema.array(of: Schema.object([
-                "text": Schema.string("The ingredient line exactly as written in the source."),
-                "name": Schema.string("Canonical item name, e.g. 'all-purpose flour', 'chicken thigh'.", nullable: true),
-                "quantity": Schema.number("Numeric amount as a decimal (1.5 for 1 ½). Null for 'to taste' or unknown.", nullable: true),
-                "unit": Schema.string("Unit of the quantity. Use 'unitless' for bare counts such as '2 eggs'.", nullable: true, values: unitValues),
-                "preparation": Schema.string("Preparation note such as 'finely diced', or the phrase for a non-numeric amount such as 'to taste'.", nullable: true),
-                "scalable": Schema.boolean("False for leavening, salt, spices, and anything that does not scale linearly with servings."),
+        inputSchema: JSONSchema.object([
+            "is_recipe": JSONSchema.boolean("False if the input does not contain a cooking recipe."),
+            "title": JSONSchema.string("The recipe's name. Empty string if is_recipe is false."),
+            "servings": JSONSchema.integer("How many servings the ingredient amounts make, only if stated.", nullable: true),
+            "prep_minutes": JSONSchema.integer("Preparation time in minutes, only if stated.", nullable: true),
+            "cook_minutes": JSONSchema.integer("Cooking time in minutes, only if stated.", nullable: true),
+            "ingredients": JSONSchema.array(of: JSONSchema.object([
+                "text": JSONSchema.string("The ingredient line exactly as written in the source."),
+                "name": JSONSchema.string("Canonical item name, e.g. 'all-purpose flour', 'chicken thigh'.", nullable: true),
+                "quantity": JSONSchema.number("Numeric amount as a decimal (1.5 for 1 ½). Null for 'to taste' or unknown.", nullable: true),
+                "unit": JSONSchema.string("Unit of the quantity. Use 'unitless' for bare counts such as '2 eggs'.", nullable: true, values: unitValues),
+                "preparation": JSONSchema.string("Preparation note such as 'finely diced', or the phrase for a non-numeric amount such as 'to taste'.", nullable: true),
+                "scalable": JSONSchema.boolean("False for leavening, salt, spices, and anything that does not scale linearly with servings."),
             ]), description: "Every ingredient line, in order."),
-            "steps": Schema.array(of: Schema.string("One instruction step."), description: "Instructions in order, one step per entry."),
-            "confidence": Schema.number("0 to 1: how completely and unambiguously the source specified the recipe."),
+            "steps": JSONSchema.array(of: JSONSchema.string("One instruction step."), description: "Instructions in order, one step per entry."),
+            "confidence": JSONSchema.number("0 to 1: how completely and unambiguously the source specified the recipe."),
         ])
     )
 

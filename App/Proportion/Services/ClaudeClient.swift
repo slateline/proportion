@@ -137,7 +137,8 @@ struct ClaudeClient: Sendable {
 }
 
 /// Helpers for writing strict JSON schemas as Swift dictionaries.
-enum Schema {
+/// (Named to avoid colliding with SwiftData's `Schema`.)
+enum JSONSchema {
     static func object(_ properties: [String: Any], description: String? = nil) -> [String: Any] {
         var schema: [String: Any] = [
             "type": "object",

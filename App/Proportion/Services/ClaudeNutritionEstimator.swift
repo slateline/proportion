@@ -18,12 +18,12 @@ struct ClaudeNutritionEstimator: NutritionEstimator {
     private static let tool = ClaudeClient.Tool(
         name: "estimate_macros",
         description: "Report estimated macronutrients for the given amount of the ingredient.",
-        inputSchema: Schema.object([
-            "protein_g": Schema.number("Grams of protein in the stated amount (not per 100 g)."),
-            "fat_g": Schema.number("Grams of fat in the stated amount."),
-            "carbs_g": Schema.number("Grams of carbohydrate in the stated amount."),
-            "assumed_grams": Schema.number("The weight in grams you assumed for the amount, if you had to infer it.", nullable: true),
-            "confidence": Schema.number("0 to 1."),
+        inputSchema: JSONSchema.object([
+            "protein_g": JSONSchema.number("Grams of protein in the stated amount (not per 100 g)."),
+            "fat_g": JSONSchema.number("Grams of fat in the stated amount."),
+            "carbs_g": JSONSchema.number("Grams of carbohydrate in the stated amount."),
+            "assumed_grams": JSONSchema.number("The weight in grams you assumed for the amount, if you had to infer it.", nullable: true),
+            "confidence": JSONSchema.number("0 to 1."),
         ])
     )
 
