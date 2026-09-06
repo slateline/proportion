@@ -1,0 +1,8 @@
+// Shared build settings. Secrets are pulled in from an untracked file so an
+// API key can never be committed by accident; the `?` makes the include
+// optional, so a fresh checkout still builds (with empty keys).
+#include? "Secrets.xcconfig"
+
+ANTHROPIC_API_KEY = $(inherited)
+USDA_API_KEY = $(inherited)
+CLAUDE_MODEL = claude-opus-5

@@ -1,0 +1,25 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode — the project is generated from App/project.yml
+App/*.xcodeproj
+App/*.xcworkspace
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Secrets — API keys live in a local xcconfig, never in source
+Secrets.xcconfig
+*.local.xcconfig
+
+# OS
+.DS_Store
+Thumbs.db

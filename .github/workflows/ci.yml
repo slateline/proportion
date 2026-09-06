@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Cheap and fast: proves the engine is Foundation-only and portable.
+  core-tests-linux:
+    name: Core tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+      - run: swift --version
+      - name: swift test
+        working-directory: ProportionCore
+        run: swift test
+
+  # The only place the iOS app can be compiled.
+  app-build:
+    name: iOS app build
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Core tests (macOS)
+        working-directory: ProportionCore
+        run: swift test
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: App
+        run: xcodegen generate
+
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project App/Proportion.xcodeproj \
+            -scheme Proportion \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee build.log | grep -E --line-buffered 'error:|warning:|BUILD (SUCCEEDED|FAILED)|\*\* ' || true
+          grep -q 'BUILD SUCCEEDED' build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: build.log
+          retention-days: 7
