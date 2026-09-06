@@ -44,7 +44,7 @@ final class AppServices {
     }
 
     var queryInterpreter: FallbackQueryInterpreter {
-        let primary: (any QueryInterpreter)? = modelEnabled ? claudeClient.map(ClaudeQueryInterpreter.init(client:)) : nil
+        let primary: (any QueryInterpreter)? = modelEnabled ? claudeClient.map { ClaudeQueryInterpreter(client: $0) } : nil
         return FallbackQueryInterpreter(primary: primary, fallback: KeywordQueryInterpreter(taxonomy: taxonomy))
     }
 
@@ -52,7 +52,7 @@ final class AppServices {
     /// source (JSON-LD) provided, honestly labelled.
     var nutritionCalculator: NutritionCalculator? {
         guard let usdaSource else { return nil }
-        let estimator: (any NutritionEstimator)? = modelEnabled ? claudeClient.map(ClaudeNutritionEstimator.init(client:)) : nil
+        let estimator: (any NutritionEstimator)? = modelEnabled ? claudeClient.map { ClaudeNutritionEstimator(client: $0) } : nil
         return NutritionCalculator(source: usdaSource, estimator: estimator, gramEstimator: GramEstimator(taxonomy: taxonomy), taxonomy: taxonomy)
     }
 

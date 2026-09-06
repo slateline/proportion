@@ -87,7 +87,8 @@ struct CaptureView: View {
                     }
                     guard !datas.isEmpty else { return }
                     let importer = services.importer
-                    flow = Flow(title: "From photo") { try await importer.importImageData(datas) }
+                    let captured = datas
+                    flow = Flow(title: "From photo") { try await importer.importImageData(captured) }
                 }
             }
             .sheet(isPresented: $showCamera) {
