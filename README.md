@@ -1,5 +1,7 @@
 # Proportion
 
+[![CI](https://github.com/slateline/proportion/actions/workflows/ci.yml/badge.svg)](https://github.com/slateline/proportion/actions/workflows/ci.yml)
+
 A macro-first recipe manager for iPhone. Capture a recipe from a photo, a
 link, pasted text, or the share sheet; get structured ingredients and
 macronutrients; re-scale it to any serving count with ingredients and
@@ -13,7 +15,7 @@ The product spec is [docs/SPEC.md](docs/SPEC.md).
 | Stage (from the spec's build order) | State |
 |---|---|
 | 1. Data model + scaling engine | ✅ Implemented, **170 tests passing** |
-| 2. Manual entry, library, recipe detail | ✅ Implemented (SwiftUI, not yet compiled — see below) |
+| 2. Manual entry, library, recipe detail | ✅ Implemented (SwiftUI; builds in CI) |
 | 3. Ingredient taxonomy + filter chips | ✅ Implemented and tested |
 | 4. Paste-text / link parsing | ✅ JSON-LD, plain-text and HTML parsers tested; Claude parser implemented |
 | 5. Nutrition lookup | ✅ USDA client + gram estimation + calculator tested; Claude estimator implemented |
@@ -23,17 +25,17 @@ The product spec is [docs/SPEC.md](docs/SPEC.md).
 | 9. Share Extension | ✅ Implemented (App Group hand-off) |
 | 10. CloudKit sync | ✅ Configured (SwiftData + private database, local fallback) |
 
-**What has been verified:** everything in `ProportionCore/` — the engine that
-holds all of the logic — builds and passes its test suite. It was developed
-and run on Windows with the swift.org toolchain, so it is known to be
-Foundation-only and portable.
+**What has been verified by CI on every push:** the `ProportionCore/` test
+suite on Linux and macOS, and a clean, warning-free build of the iOS app and
+its Share Extension for the simulator on macOS with the latest stable Xcode.
+The core was developed and run on Windows with the swift.org toolchain, so it
+is known to be Foundation-only and portable.
 
-**What has not:** the SwiftUI/SwiftData app layer in `App/` was written on a
-machine without Xcode and has not been compiled. Expect a first Xcode build to
-surface a handful of small issues (a modifier signature, a strict-concurrency
-warning). The architecture keeps that layer thin on purpose: views call into
-`ProportionCore`, and every parser, matcher and calculator lives where it can
-be tested.
+**What has not:** the app has not yet been *run*. It compiles, but nobody has
+tapped through it on a device or simulator, so expect layout and flow issues
+that only show up live. The architecture keeps the app layer thin on purpose:
+views call into `ProportionCore`, and every parser, matcher and calculator
+lives where it can be tested.
 
 ## Layout
 
