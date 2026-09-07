@@ -65,6 +65,7 @@ struct ServingStepper: View {
     var body: some View {
         HStack(spacing: 16) {
             button("minus", enabled: servings > ScalingEngine.servingRange.lowerBound) { servings -= 1 }
+                .accessibilityIdentifier("servings-decrement")
             VStack(spacing: 0) {
                 Text("\(servings)")
                     .font(.system(.title2, design: .rounded, weight: .semibold))
@@ -76,6 +77,7 @@ struct ServingStepper: View {
             }
             .frame(minWidth: 72)
             button("plus", enabled: servings < ScalingEngine.servingRange.upperBound) { servings += 1 }
+                .accessibilityIdentifier("servings-increment")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)

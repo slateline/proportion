@@ -175,11 +175,13 @@ struct SearchView: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($focused)
                 .onSubmit(send)
+                .accessibilityIdentifier("search-input")
             Button(action: send) {
                 Image(systemName: "arrow.up.circle.fill").font(.title)
             }
             .disabled(input.trimmingCharacters(in: .whitespaces).isEmpty || thinking)
             .accessibilityLabel("Send")
+            .accessibilityIdentifier("search-send")
         }
         .padding()
         .background(.bar)

@@ -7,8 +7,18 @@ struct ProportionApp: App {
     private let container: ModelContainer
     @State private var services = AppServices()
 
+    /// Launched by the UI tests: in-memory store seeded with sample recipes.
+    static var isUITesting: Bool { CommandLine.arguments.contains("-ui-testing") }
+
     init() {
-        container = Self.makeContainer()
+        if Self.isUITesting {
+            container = Self.makeTestContainer()
+            for recipe in SampleData.recipes {
+                container.mainContext.insert(StoredRecipe(recipe: recipe))
+            }
+        } else {
+            container = Self.makeContainer()
+        }
     }
 
     var body: some Scene {
@@ -33,6 +43,16 @@ struct ProportionApp: App {
             return try ModelContainer(for: schema, configurations: [local])
         } catch {
             fatalError("Could not create the recipe store: \(error)")
+        }
+    }
+
+    private static func makeTestContainer() -> ModelContainer {
+        let schema = Schema([StoredRecipe.self])
+        let config = ModelConfiguration("Proportion-UITest", schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+        do {
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            fatalError("Could not create the in-memory store: \(error)")
         }
     }
 }

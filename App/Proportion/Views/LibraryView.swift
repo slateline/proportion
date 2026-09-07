@@ -58,6 +58,7 @@ struct LibraryView: View {
                                         RecipeCardView(stored: s, recipe: recipe)
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("recipe-card")
                                 }
                             }
                         }
@@ -103,6 +104,7 @@ struct LibraryView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showNew = true } label: { Label("New recipe", systemImage: "plus") }
+                        .accessibilityIdentifier("library-new")
                 }
             }
             .sheet(isPresented: $showSearch) { SearchView() }

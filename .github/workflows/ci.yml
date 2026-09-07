@@ -73,3 +73,96 @@ jobs:
           name: xcodebuild-log
           path: build.log
           retention-days: 7
+
+  # Drives the app through every screen in the simulator and publishes the
+  # screenshots (and a recording) so the UI can be reviewed without a Mac.
+  screenshots:
+    name: Simulator screenshots
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        working-directory: App
+        run: xcodegen generate
+
+      - name: Boot simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '.devices[][] | select(.name == "iPhone 16 Pro") | .udid' | head -n 1)
+          if [ -z "$UDID" ]; then
+            UDID=$(xcrun simctl list devices available -j \
+              | jq -r '.devices[][] | select(.name | startswith("iPhone")) | .udid' | tail -n 1)
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl list devices | grep "$UDID"
+
+      - name: Start screen recording
+        run: |
+          xcrun simctl io "${{ steps.sim.outputs.udid }}" recordVideo --codec h264 --force walkthrough.mp4 &
+          echo $! > recorder.pid
+          sleep 2
+
+      - name: Run UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project App/Proportion.xcodeproj \
+            -scheme Proportion \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:ProportionUITests \
+            -resultBundlePath ui.xcresult \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            2>&1 | tee ui-test.log | grep -E --line-buffered 'error:|Test Case|Test Suite|\*\* ' || true
+          grep -q 'TEST SUCCEEDED' ui-test.log
+
+      - name: Stop screen recording
+        if: always()
+        run: |
+          if [ -f recorder.pid ]; then kill -INT "$(cat recorder.pid)" || true; sleep 4; fi
+          ls -la walkthrough.mp4 || true
+
+      - name: Export screenshots
+        if: always()
+        run: |
+          mkdir -p screenshots
+          xcrun xcresulttool export attachments --path ui.xcresult --output-path screenshots || true
+          ls -la screenshots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+          retention-days: 14
+
+      - name: Upload recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walkthrough-video
+          path: walkthrough.mp4
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-log
+          path: ui-test.log
+          retention-days: 7

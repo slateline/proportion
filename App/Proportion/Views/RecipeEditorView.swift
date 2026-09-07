@@ -140,6 +140,12 @@ struct RecipeEditorView: View {
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if showsCancel {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("editor-cancel")
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 if saving {
                     ProgressView()
@@ -152,6 +158,12 @@ struct RecipeEditorView: View {
         }
         .onAppear(perform: load)
         .interactiveDismissDisabled(saving)
+    }
+
+    /// Review mode lives inside ImportFlowView, which has its own Cancel.
+    private var showsCancel: Bool {
+        if case .review = mode { return false }
+        return true
     }
 
     private var navigationTitle: String {
