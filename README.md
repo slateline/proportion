@@ -1,153 +1,106 @@
 # Proportion
 
 [![CI](https://github.com/slateline/proportion/actions/workflows/ci.yml/badge.svg)](https://github.com/slateline/proportion/actions/workflows/ci.yml)
+![Platform](https://img.shields.io/badge/platform-iOS%2018-blue)
+![Swift](https://img.shields.io/badge/swift-6-orange)
 
 A macro-first recipe manager for iPhone. Capture a recipe from a photo, a
 link, pasted text, or the share sheet; get structured ingredients and
-macronutrients; re-scale it to any serving count with ingredients and
-nutrition recalculating together; and find what to cook by describing it —
-"high protein dinner, no dairy, under 30 minutes".
+macronutrients; scale it to any number of servings; and find what to cook by
+describing it.
 
-The product spec is [docs/SPEC.md](docs/SPEC.md).
+<p align="center">
+  <img src="docs/screenshots/library.png" width="200" alt="Library">
+  <img src="docs/screenshots/recipe-scaled.png" width="200" alt="Recipe scaled to 8 servings">
+  <img src="docs/screenshots/search.png" width="200" alt="Conversational search">
+  <img src="docs/screenshots/recipe-dark.png" width="200" alt="Recipe in dark mode">
+</p>
+
+## Features
+
+- **Capture from anywhere** — photos and screenshots (on-device OCR), web links
+  (schema.org recipe data when present), pasted text, and a Share Extension for
+  Safari and social apps. Every import goes through a review screen before it
+  is saved.
+- **Exact scaling** — quantities are stored as rationals, so scaling never
+  drifts. Units promote and demote as a cook expects (3 tsp → 1 tbsp,
+  16 tbsp → 1 cup) and amounts round to kitchen-friendly fractions.
+- **Macros first** — protein, fat and carbohydrate per serving on every card,
+  with calories derived and a confidence label (verified, partly estimated,
+  estimated). Nutrition comes from USDA FoodData Central.
+- **Conversational search** — "high protein dinner, no dairy, under 30 minutes"
+  becomes a set of editable filter chips. Follow-ups refine the search, and an
+  empty result names the constraint that eliminated everything.
+- **Dietary profile** — presets (vegetarian, gluten-free, nut-free, …) and
+  custom exclusions that walk an ingredient taxonomy: "no dairy" catches
+  parmesan, ghee and buttermilk; "no butter" does not catch peanut butter.
+- **Private by design** — recipes live on the device and in the user's private
+  iCloud database. Model-assisted parsing is optional, off without a key, and
+  switchable in Settings.
+
+## Getting started
+
+Requires macOS with Xcode 16 or later.
+
+```bash
+brew install xcodegen
+cd App
+cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # optional: add API keys
+xcodegen generate
+open Proportion.xcodeproj
+```
+
+Select your development team under Signing & Capabilities and run on a
+simulator or device. The bundle identifiers, iCloud container and App Group
+are defined in `App/project.yml`.
+
+### Configuration
+
+Both keys are optional. Without them the app uses its built-in deterministic
+parsers and keyword search, and shows nutrition only when the source provides it.
+
+| Key | Purpose | Where to get it |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | Model-assisted recipe parsing, search interpretation, nutrition estimates | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| `USDA_API_KEY` | Nutrition lookup | [fdc.nal.usda.gov](https://fdc.nal.usda.gov/api-key-signup.html) |
+
+Keys are read from `App/Config/Secrets.xcconfig`, which is git-ignored.
+
+## Testing
+
+The engine (`ProportionCore`) is a Foundation-only Swift package and runs
+anywhere Swift does:
+
+```bash
+cd ProportionCore && swift test
+```
+
+Continuous integration runs the core tests on Linux and macOS, builds the app
+and its extension, and drives the app through every screen in the simulator,
+publishing screenshots and a recording as workflow artifacts. See
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for details, including running the
+core tests on Windows.
+
+## Project structure
+
+```
+ProportionCore/   Swift package: models, scaling, parsing, nutrition, search (170 tests)
+App/              iOS app (SwiftUI + SwiftData), Share Extension, UI tests
+docs/             Product spec, architecture notes, development guide
+scripts/          Helper scripts
+```
+
+## Documentation
+
+- [Product specification](docs/SPEC.md)
+- [Architecture and design decisions](docs/ARCHITECTURE.md)
+- [Development guide](docs/DEVELOPMENT.md) — CI, screenshot pipeline, Windows setup
 
 ## Status
 
-| Stage (from the spec's build order) | State |
-|---|---|
-| 1. Data model + scaling engine | ✅ Implemented, **170 tests passing** |
-| 2. Manual entry, library, recipe detail | ✅ Implemented (SwiftUI; builds in CI) |
-| 3. Ingredient taxonomy + filter chips | ✅ Implemented and tested |
-| 4. Paste-text / link parsing | ✅ JSON-LD, plain-text and HTML parsers tested; Claude parser implemented |
-| 5. Nutrition lookup | ✅ USDA client + gram estimation + calculator tested; Claude estimator implemented |
-| 6. Conversational search | ✅ Query model, local engine, keyword interpreter tested; Claude interpreter implemented |
-| 7. Dietary profile | ✅ Implemented and tested |
-| 8. Photo / OCR capture | ✅ Implemented (Vision framework) |
-| 9. Share Extension | ✅ Implemented (App Group hand-off) |
-| 10. CloudKit sync | ✅ Configured (SwiftData + private database, local fallback) |
+All ten stages of the specification are implemented. The core is fully
+tested; the app builds cleanly and passes its simulator walkthrough in CI. It
+has not yet been run on a physical device, so the camera, sharing from a real
+social app, and iCloud sync remain untested end to end.
 
-**What has been verified by CI on every push:** the `ProportionCore/` test
-suite on Linux and macOS, and a clean, warning-free build of the iOS app and
-its Share Extension for the simulator on macOS with the latest stable Xcode.
-The core was developed and run on Windows with the swift.org toolchain, so it
-is known to be Foundation-only and portable.
-
-**Also on every push:** a UI test drives the app through every screen on an
-iPhone simulator — light, dark, and accessibility text size — and the CI run
-publishes the screenshots and a screen recording as artifacts (`screenshots`,
-`walkthrough-video`). That is how the app is reviewed from machines that can't
-run the simulator. Launching with `-ui-testing` seeds an in-memory library.
-
-**What has not been verified:** nothing has run on a physical iPhone, so the
-camera, the Share Extension from a real social app, and iCloud sync are
-untested end to end. The architecture keeps the app layer thin on purpose:
-views call into `ProportionCore`, and every parser, matcher and calculator
-lives where it can be tested.
-
-## Layout
-
-```
-proportion/
-├── docs/SPEC.md                    Product spec and build order
-├── scripts/test-core.ps1           Runs the core tests on Windows
-├── ProportionCore/                 Pure-Swift engine — Foundation only
-│   ├── Sources/ProportionCore/
-│   │   ├── Rational.swift              Exact fractions: no float drift, ever
-│   │   ├── Units.swift                 Unit families; exact conversion inside a family only
-│   │   ├── Quantity.swift              amount + unit — the stored form of every amount
-│   │   ├── Macros.swift                protein / fat / carbs; calories derived (4/4/9)
-│   │   ├── Ingredient.swift, Recipe.swift
-│   │   ├── ScalingEngine.swift         Non-destructive scaling by servings or protein
-│   │   ├── QuantityFormatter.swift     Unit promotion/demotion, cook-friendly rounding
-│   │   ├── IngredientTaxonomy.swift    parmesan → hard cheese → cheese → dairy
-│   │   ├── TaxonomyData.swift          The bundled hierarchy (~400 terms)
-│   │   ├── IngredientLineParser.swift  "2 cups flour, sifted" → structured, deterministic
-│   │   ├── PlainTextRecipeParser.swift Pasted / OCR text → draft, deterministic
-│   │   ├── JSONLDRecipeExtractor.swift schema.org Recipe from a web page
-│   │   ├── HTMLTextExtractor.swift     Readable lines from a page with no JSON-LD
-│   │   ├── RecipeDraft.swift           What every capture path produces for review
-│   │   ├── DietaryProfile.swift        Presets + custom exclusions; the disclaimer
-│   │   ├── Nutrition/                  USDA client, gram estimation, calculator
-│   │   └── Search/                     SearchQuery, SearchEngine, keyword + fallback interpreters
-│   └── Tests/ProportionCoreTests/      170 tests
-└── App/                            iOS app (Xcode 16, iOS 18)
-    ├── project.yml                     XcodeGen definition — generates the .xcodeproj
-    ├── Config/                         Base.xcconfig + Secrets.example.xcconfig
-    ├── Shared/PendingImport.swift      App Group hand-off used by app and extension
-    ├── Proportion/
-    │   ├── ProportionApp.swift         Entry point; SwiftData + CloudKit container
-    │   ├── Model/                      StoredRecipe (@Model), SettingsStore, PendingImportsController
-    │   ├── Services/                   ClaudeClient, Claude adapters, RecipeImporter, OCRService, AppServices
-    │   └── Views/                      Library, Detail, Editor (review/manual/edit), Search, Capture, Settings
-    └── ProportionShare/                Share Extension
-```
-
-## Building the app
-
-1. On a Mac with Xcode 16+:
-   ```bash
-   brew install xcodegen
-   cd App
-   cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # add your keys
-   xcodegen generate
-   open Proportion.xcodeproj
-   ```
-2. Set your team for signing. The bundle IDs, iCloud container
-   (`iCloud.com.proportion.app`) and App Group (`group.com.proportion.app`)
-   are in `project.yml`; change the prefix if you prefer.
-3. Keys are optional. With no Anthropic key the app uses its deterministic
-   parsers and keyword search only; with no USDA key nutrition stays whatever
-   the source provided, honestly labelled.
-
-Model calls use `claude-opus-5` via the Messages API with adaptive thinking and
-server-side refusal fallbacks enabled (`fallbacks: "default"`); the model name
-is set in `Config/Base.xcconfig`.
-
-## Running the core tests
-
-Any platform with a Swift 5.9+ toolchain:
-
-```bash
-cd ProportionCore
-swift test
-```
-
-On Windows, the toolchain needs MSVC's C runtime to link, so use the script,
-which sets up the Visual Studio environment first:
-
-```powershell
-powershell -File scripts\test-core.ps1
-```
-
-## Design decisions worth knowing
-
-**Quantities are exact rationals.** `2 cups` at 7 servings is exactly
-`7/2 cup`, and every scale operation starts from the base recipe, so hammering
-the serving stepper can never drift. Display rounding (⅛ cup, ¼ tsp, 5 g under
-100 g, 25 g above) is recomputed from the exact value each time; clean
-fractions the recipe already uses (⅓ cup) are preserved; tiny amounts never
-collapse to zero.
-
-**Per-serving macros are structurally invariant under scaling.** They are read
-from the base recipe, never divided back out of scaled totals, so they cannot
-disagree with themselves.
-
-**The model interprets; it never selects.** Conversational search sends one
-message to the model with one job — produce a `SearchQuery` — and the query
-runs as a local predicate over the library. It can't hallucinate a recipe,
-it's instant, and it works offline through the keyword interpreter.
-
-**Deterministic before probabilistic, everywhere.** JSON-LD before text
-extraction, the line parser before the model, on-device OCR before vision. The
-model is the fallback for what a regex can't do, and it's gated by a privacy
-switch in Settings.
-
-**Exclusions walk a taxonomy and are over-inclusive on purpose.** "No dairy"
-catches parmesan, ghee and buttermilk; "no butter" does *not* catch peanut
-butter. A filter that occasionally hides a fine recipe is a nuisance; one that
-shows an unsafe one is a harm — which is also why the UI never uses the words
-"safe" or "free from".
-
-**Social video is handled through the share sheet.** Downloading TikTok or
-Instagram content violates their terms and fails App Store review, so the
-Share Extension takes the caption the host app provides — which is where the
-recipe usually is — and the page's JSON-LD when there is any.
+Nutrition values shown by the app are approximate and are not medical advice.
