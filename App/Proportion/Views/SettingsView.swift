@@ -130,8 +130,16 @@ struct SettingsView: View {
     }
 
     private func checkSync() async {
+        // `CKContainer.default()` raises an Objective-C exception (not a Swift
+        // error) when the build lacks the iCloud entitlement — e.g. an unsigned
+        // CI or simulator build — and that takes the whole app down. Naming the
+        // container explicitly returns the failure as an error instead.
+        if ProportionApp.isUITesting {
+            syncStatus = "Unavailable in tests"
+            return
+        }
         do {
-            let status = try await CKContainer.default().accountStatus()
+            let status = try await CKContainer(identifier: "iCloud.com.proportion.app").accountStatus()
             switch status {
             case .available: syncStatus = "On"
             case .noAccount: syncStatus = "No iCloud account"
