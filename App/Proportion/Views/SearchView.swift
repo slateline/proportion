@@ -22,6 +22,8 @@ struct SearchView: View {
         let id = UUID()
         let isUser: Bool
         let text: String
+        /// "Interpreted by Claude" / "interpreted offline (reason)".
+        var footnote: String? = nil
     }
 
     private var decoded: [(stored: StoredRecipe, recipe: Recipe)] {
@@ -111,13 +113,21 @@ struct SearchView: View {
     }
 
     private func bubble(_ message: Message) -> some View {
-        HStack {
-            if message.isUser { Spacer(minLength: 40) }
-            Text(message.text)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(message.isUser ? Theme.accent.opacity(0.18) : Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            if !message.isUser { Spacer(minLength: 40) }
+        VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
+            HStack {
+                if message.isUser { Spacer(minLength: 40) }
+                Text(message.text)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(message.isUser ? Theme.accent.opacity(0.18) : Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                if !message.isUser { Spacer(minLength: 40) }
+            }
+            if let footnote = message.footnote {
+                Text(footnote)
+                    .font(.caption2)
+                    .foregroundStyle(footnote.contains("failed") ? .orange : .secondary)
+                    .padding(.horizontal, 6)
+            }
         }
         .padding(.horizontal)
         .accessibilityLabel(message.isUser ? "You said: \(message.text)" : message.text)
@@ -197,22 +207,36 @@ struct SearchView: View {
         transcript.append(Message(isUser: true, text: message))
         thinking = true
         let interpreter = services.queryInterpreter
+        let modelEnabled = services.modelEnabled
         let current = query.isEmpty ? nil : query
         Task {
-            let interpreted = (try? await interpreter.interpret(message, refining: current))
-                ?? KeywordQueryInterpreter(taxonomy: services.taxonomy).parse(message, refining: current)
-            query = interpreted
+            let outcome = await interpreter.interpretDetailed(message, refining: current)
+            query = outcome.query
             thinking = false
             let count = result.matches.count
             let summary: String
-            if interpreted.isEmpty {
+            if outcome.query.isEmpty {
                 summary = "Cleared the search."
             } else if count == 0 {
                 summary = "Nothing matches that yet."
             } else {
                 summary = "Here \(count == 1 ? "is" : "are") \(count) — the chips above show how I read that. Tap one to drop it."
             }
-            transcript.append(Message(isUser: false, text: summary))
+
+            // Say what did the interpreting, so a tester can tell the model
+            // path from the offline one and see why a model call failed.
+            var footnote: String? = nil
+            switch outcome.source {
+            case .model:
+                footnote = "Interpreted by Claude"
+            case .keyword:
+                if let error = outcome.modelError {
+                    footnote = "Claude failed (\(error)) — interpreted offline"
+                } else if modelEnabled {
+                    footnote = "Interpreted offline"
+                }
+            }
+            transcript.append(Message(isUser: false, text: summary, footnote: footnote))
         }
     }
 

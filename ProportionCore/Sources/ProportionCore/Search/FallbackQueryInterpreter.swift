@@ -12,10 +12,35 @@ public struct FallbackQueryInterpreter: QueryInterpreter {
         self.fallback = fallback
     }
 
-    public func interpret(_ message: String, refining current: SearchQuery?) async throws -> SearchQuery {
-        if let primary, let query = try? await primary.interpret(message, refining: current) {
-            return query
+    /// What answered, so the UI can say so and testers can see failures.
+    public struct Interpretation: Sendable {
+        public enum Source: String, Sendable {
+            case model
+            case keyword
         }
-        return fallback.parse(message, refining: current)
+
+        public var query: SearchQuery
+        public var source: Source
+        /// Set when the model was tried and failed; the query then came from the fallback.
+        public var modelError: String?
+    }
+
+    public func interpret(_ message: String, refining current: SearchQuery?) async throws -> SearchQuery {
+        await interpretDetailed(message, refining: current).query
+    }
+
+    public func interpretDetailed(_ message: String, refining current: SearchQuery?) async -> Interpretation {
+        guard let primary else {
+            return Interpretation(query: fallback.parse(message, refining: current), source: .keyword, modelError: nil)
+        }
+        do {
+            let query = try await primary.interpret(message, refining: current)
+            return Interpretation(query: query, source: .model, modelError: nil)
+        } catch {
+            return Interpretation(
+                query: fallback.parse(message, refining: current),
+                source: .keyword,
+                modelError: error.localizedDescription)
+        }
     }
 }

@@ -96,7 +96,9 @@ struct RecipeImporter: Sendable {
                 if source == .ocr { draft.source = .ocr }
                 return draft
             } catch {
-                if let heuristic { return heuristic.flagged("The automatic parse struggled with this text — check every line.") }
+                if let heuristic {
+                    return heuristic.flagged("Claude couldn't read this (\(error.localizedDescription)). Showing the built-in parse instead — check every line.")
+                }
                 throw ImportError.nothingFound(fallbackText: trimmed)
             }
         }

@@ -158,4 +158,19 @@ final class FallbackQueryInterpreterTests: XCTestCase {
         let q = try await FallbackQueryInterpreter(primary: nil).interpret("quick", refining: nil)
         XCTAssertEqual(q.maxMinutes, 30)
     }
+
+    func testDetailedOutcomeReportsSourceAndError() async {
+        let fromModel = await FallbackQueryInterpreter(primary: Fixed()).interpretDetailed("x", refining: nil)
+        XCTAssertEqual(fromModel.source, .model)
+        XCTAssertNil(fromModel.modelError)
+
+        let failed = await FallbackQueryInterpreter(primary: Failing()).interpretDetailed("no dairy", refining: nil)
+        XCTAssertEqual(failed.source, .keyword)
+        XCTAssertEqual(failed.query.excludeIngredients, ["dairy"])
+        XCTAssertNotNil(failed.modelError)
+
+        let none = await FallbackQueryInterpreter(primary: nil).interpretDetailed("no dairy", refining: nil)
+        XCTAssertEqual(none.source, .keyword)
+        XCTAssertNil(none.modelError, "no model was tried, so there is no error to report")
+    }
 }

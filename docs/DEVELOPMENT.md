@@ -54,6 +54,26 @@ git-ignored. Values flow into `Info.plist` at build time and are read by
 `Secrets.swift`; an empty or placeholder value reads as "not configured" and
 the corresponding feature degrades gracefully.
 
+## Testing the model features
+
+1. Create a key at [console.anthropic.com](https://console.anthropic.com/settings/keys)
+   and put it in `App/Config/Secrets.xcconfig`:
+   ```
+   ANTHROPIC_API_KEY = sk-ant-…
+   ```
+2. Check the key and request format without the app:
+   ```bash
+   scripts/check-claude.sh
+   ```
+3. Rebuild (`scripts/run-simulator.sh --seed` or ⌘R in Xcode). The key is
+   compiled into the build, so a rebuild is required after changing it.
+
+In the app, each search reply carries a footnote — *Interpreted by Claude*
+or *interpreted offline (reason)* — and an import that falls back from the
+model shows the model's error in the review screen's warnings. Settings →
+Privacy shows whether a key was detected. Only text is sent; photos stay on
+the device unless on-device OCR can't read them.
+
 ## Running the core tests
 
 ```bash
