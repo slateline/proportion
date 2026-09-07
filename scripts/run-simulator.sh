@@ -22,6 +22,23 @@ done
 
 cd "$(dirname "$0")/../App"
 
+# The simulator ships only with full Xcode; the Command Line Tools alone
+# can't build or run iOS apps.
+DEV_DIR="$(xcode-select -p 2>/dev/null || true)"
+if [[ "$DEV_DIR" != *"/Xcode"*".app/"* ]] || ! xcrun --find simctl >/dev/null 2>&1; then
+  cat <<'EOF'
+Xcode is not the active developer directory (found only the Command Line Tools).
+
+  1. Install Xcode from the App Store (or https://developer.apple.com/xcode/), if you haven't.
+  2. Open it once and let it finish installing components.
+  3. Point the command-line tools at it:
+       sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+       sudo xcodebuild -license accept
+  4. Run this script again.
+EOF
+  exit 1
+fi
+
 if ! command -v xcodegen >/dev/null 2>&1; then
   echo "Installing XcodeGen…"
   brew install xcodegen
