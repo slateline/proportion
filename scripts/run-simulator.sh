@@ -9,15 +9,16 @@
 # Installs XcodeGen via Homebrew if it is missing.
 set -euo pipefail
 
-DEVICE="iPhone 16 Pro"
+DEVICE=""
 SEED=0
-for arg in "$@"; do
-  case "$arg" in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --seed) SEED=1 ;;
     --device) shift; DEVICE="$1" ;;
-    --device=*) DEVICE="${arg#--device=}" ;;
+    --device=*) DEVICE="${1#--device=}" ;;
     -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
   esac
+  shift
 done
 
 cd "$(dirname "$0")/../App"
@@ -47,11 +48,22 @@ fi
 echo "Generating Xcode project…"
 xcodegen generate --quiet
 
-UDID=$(xcrun simctl list devices available -j \
-  | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next((x['udid'] for v in d.values() for x in v if x['name']=='$DEVICE'),''))")
+# Pick a simulator: the one asked for, else the newest "Pro" iPhone, else any iPhone.
+read -r UDID DEVICE < <(xcrun simctl list devices available -j | python3 -c "
+import json, sys
+wanted = '''$DEVICE'''
+phones = [d for v in json.load(sys.stdin)['devices'].values() for d in v if d['name'].startswith('iPhone')]
+def pick():
+    if wanted:
+        return next((d for d in phones if d['name'] == wanted), None)
+    pro = [d for d in phones if 'Pro' in d['name'] and 'Max' not in d['name']]
+    return (pro or phones or [None])[-1]
+d = pick()
+print(d['udid'], d['name']) if d else print('', '')
+")
 if [ -z "$UDID" ]; then
-  echo "No available simulator named '$DEVICE'. Available iPhones:"
-  xcrun simctl list devices available | grep iPhone
+  echo "No available iPhone simulator${DEVICE:+ named '$DEVICE'}. Available:"
+  xcrun simctl list devices available | grep iPhone || echo "  (none — open Xcode → Settings → Components and install an iOS simulator runtime)"
   exit 1
 fi
 
