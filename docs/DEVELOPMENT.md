@@ -7,7 +7,18 @@
   generated from `App/project.yml` and is not committed
 - Any Swift 5.9+ toolchain for the core package alone
 
-## Building the app
+## Running in the simulator (no Apple account needed)
+
+```bash
+scripts/run-simulator.sh --seed
+```
+
+Generates the project, builds unsigned for the iOS Simulator, installs, and
+launches. `--seed` starts with sample recipes so there is something to look at;
+omit it for a fresh-install experience. `--device "iPhone 15"` picks a
+different simulator.
+
+## Building the app in Xcode
 
 ```bash
 brew install xcodegen
@@ -16,6 +27,15 @@ cp Config/Secrets.example.xcconfig Config/Secrets.xcconfig   # optional
 xcodegen generate
 open Proportion.xcodeproj
 ```
+
+Xcode requires a development team even for simulator builds because the app
+declares iCloud and App Group capabilities. A paid Apple Developer team works
+as-is (Xcode registers the container and group). A free Personal Team cannot
+hold those capabilities; to run on your own iPhone with one, remove the
+`com.apple.developer.icloud-*` and `application-groups` entries from both
+`entitlements` blocks in `project.yml`, drop the `ProportionShare` dependency
+from the app target, and regenerate. Sync and the Share Extension are then
+unavailable, everything else works.
 
 Set your team under Signing & Capabilities. The app uses three identifiers
 defined in `project.yml`; change the `com.proportion` prefix if you need your
