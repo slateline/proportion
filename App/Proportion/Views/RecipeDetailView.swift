@@ -8,6 +8,7 @@ struct RecipeDetailView: View {
     @Environment(AppServices.self) private var services
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var servings: Int = 4
     @State private var proteinTarget = ""
@@ -125,8 +126,11 @@ struct RecipeDetailView: View {
     @ViewBuilder
     private func nutrition(_ scaled: ScaledRecipe) -> some View {
         if let per = scaled.perServingMacros, let total = scaled.totalMacros {
+            let ringLayout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 16))
+                : AnyLayout(HStackLayout(alignment: .center, spacing: 20))
             VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .center, spacing: 20) {
+                ringLayout {
                     MacroRingView(macros: per)
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Per serving")

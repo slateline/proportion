@@ -10,6 +10,14 @@ struct ProportionApp: App {
     /// Launched by the UI tests: in-memory store seeded with sample recipes.
     static var isUITesting: Bool { CommandLine.arguments.contains("-ui-testing") }
 
+    /// UI tests can pin the appearance; `-AppleInterfaceStyle` is not
+    /// honoured reliably by the simulator, so the app applies it itself.
+    static var forcedColorScheme: ColorScheme? {
+        if CommandLine.arguments.contains("-ui-testing-dark") { return .dark }
+        if CommandLine.arguments.contains("-ui-testing-light") { return .light }
+        return nil
+    }
+
     init() {
         if Self.isUITesting {
             container = Self.makeTestContainer()
@@ -25,6 +33,7 @@ struct ProportionApp: App {
         WindowGroup {
             RootView()
                 .environment(services)
+                .preferredColorScheme(Self.forcedColorScheme)
                 .onOpenURL { url in services.pendingImports.handle(url: url) }
         }
         .modelContainer(container)

@@ -27,9 +27,17 @@ final class ScreenshotTests: XCTestCase {
     }
 
     private func tab(_ name: String) {
+        dismissKeyboardIfNeeded()
         let button = app.tabBars.buttons[name]
         XCTAssertTrue(button.waitForExistence(timeout: 5), "tab \(name)")
         button.tap()
+    }
+
+    /// The keyboard covers the tab bar; a swipe on the content dismisses it.
+    private func dismissKeyboardIfNeeded() {
+        guard app.keyboards.count > 0 else { return }
+        app.swipeDown()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
     }
 
     private func firstRecipeCard() -> XCUIElement {
@@ -77,8 +85,6 @@ final class ScreenshotTests: XCTestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
         snap("07-search-refined")
 
-        app.buttons["Done"].firstMatch.tap()
-
         tab("Capture")
         snap("08-capture")
 
@@ -88,16 +94,21 @@ final class ScreenshotTests: XCTestCase {
         snap("10-settings-privacy")
 
         tab("Library")
-        app.buttons["library-new"].tap()
-        XCTAssertTrue(app.buttons["editor-cancel"].waitForExistence(timeout: 5))
+        // Toolbar buttons don't reliably carry accessibility identifiers in
+        // SwiftUI; the label works everywhere.
+        let newButton = app.buttons["library-new"].exists ? app.buttons["library-new"] : app.buttons["New recipe"]
+        XCTAssertTrue(newButton.waitForExistence(timeout: 5), "new recipe button")
+        newButton.tap()
+        let cancel = app.buttons["editor-cancel"].exists ? app.buttons["editor-cancel"] : app.buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
         snap("11-editor-blank")
-        app.buttons["editor-cancel"].tap()
+        cancel.tap()
     }
 
     // MARK: Dark mode
 
     func test02_DarkMode() {
-        launch(extraArguments: ["-AppleInterfaceStyle", "Dark"])
+        launch(extraArguments: ["-ui-testing-dark"])
 
         tab("Library")
         _ = firstRecipeCard()

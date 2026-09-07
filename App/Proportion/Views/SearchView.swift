@@ -53,6 +53,7 @@ struct SearchView: View {
                         }
                         .padding(.vertical)
                     }
+                    .scrollDismissesKeyboard(.immediately)
                     .onChange(of: transcript.count) { _, _ in
                         withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                     }

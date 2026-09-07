@@ -44,9 +44,15 @@ struct MacroRingView: View {
 
 struct MacroLegend: View {
     let macros: Macros
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(spacing: 12) {
+        // Three columns fit at normal sizes; at accessibility sizes the
+        // labels wrap mid-word, so stack them instead.
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             MacroPill(label: "Protein", value: macros.protein, color: Theme.protein)
             MacroPill(label: "Fat", value: macros.fat, color: Theme.fat)
             MacroPill(label: "Carbs", value: macros.carbs, color: Theme.carbs)
