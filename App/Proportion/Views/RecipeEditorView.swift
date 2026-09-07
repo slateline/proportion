@@ -99,7 +99,7 @@ struct RecipeEditorView: View {
                 HStack {
                     Text("Ingredients")
                     Spacer()
-                    let unparsed = lines.filter(\.isUnparsed).count
+                    let unparsed = lines.filter { $0.isUnparsed && !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }.count
                     if unparsed > 0 {
                         Text("\(unparsed) without amount")
                             .foregroundStyle(.orange)
@@ -320,7 +320,9 @@ private struct IngredientLineEditor: View {
             TextField("e.g. 2 cups flour, sifted", text: $line.text)
                 .onChange(of: line.text) { _, _ in reparse(&line) }
             HStack(spacing: 6) {
-                if line.isUnparsed {
+                if line.text.trimmingCharacters(in: .whitespaces).isEmpty {
+                    Text("Type an ingredient line").foregroundStyle(.tertiary)
+                } else if line.isUnparsed {
                     Image(systemName: "questionmark.circle.fill").foregroundStyle(.orange)
                     Text("No amount recognised")
                 } else {

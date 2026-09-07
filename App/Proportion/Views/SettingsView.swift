@@ -74,7 +74,9 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Toggle("Use Claude to read recipes and searches", isOn: $settings.useModelForParsing)
+                    Toggle("Use Claude to read recipes and searches", isOn: Binding(
+                        get: { services.hasModelKey && settings.useModelForParsing },
+                        set: { settings.useModelForParsing = $0 }))
                         .disabled(!services.hasModelKey)
                 } header: {
                     Text("Privacy")

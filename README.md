@@ -31,9 +31,15 @@ its Share Extension for the simulator on macOS with the latest stable Xcode.
 The core was developed and run on Windows with the swift.org toolchain, so it
 is known to be Foundation-only and portable.
 
-**What has not:** the app has not yet been *run*. It compiles, but nobody has
-tapped through it on a device or simulator, so expect layout and flow issues
-that only show up live. The architecture keeps the app layer thin on purpose:
+**Also on every push:** a UI test drives the app through every screen on an
+iPhone simulator — light, dark, and accessibility text size — and the CI run
+publishes the screenshots and a screen recording as artifacts (`screenshots`,
+`walkthrough-video`). That is how the app is reviewed from machines that can't
+run the simulator. Launching with `-ui-testing` seeds an in-memory library.
+
+**What has not been verified:** nothing has run on a physical iPhone, so the
+camera, the Share Extension from a real social app, and iCloud sync are
+untested end to end. The architecture keeps the app layer thin on purpose:
 views call into `ProportionCore`, and every parser, matcher and calculator
 lives where it can be tested.
 
